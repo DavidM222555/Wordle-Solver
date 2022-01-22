@@ -1,3 +1,4 @@
+from mimetypes import init
 from turtle import position
 
 # This initializes a score dictionary that contains keys of five letter words and scores values
@@ -79,11 +80,11 @@ def update_scores(scores, prev_string, hint_string):
 
     scores = dict(sorted(scores.items(), key = lambda item : item[1], reverse=True))
     
-
-def simulate_game():
+# Interactive version of the script to be used by a person testing the program
+def simulate_game_with_user_input():
     scores = initialize_scores()
 
-    for x in range(6):
+    for round in range(6):
         guess = max(scores, key=scores.get) # Get the word with the highest score currently and show the user that string
         print("Input: ", guess) 
 
@@ -91,5 +92,68 @@ def simulate_game():
 
         update_scores(scores, guess, hint_string) # And now update the scores based off 
 
+# Generates a help string given the answer and a guess string
+def make_help_string(guess_string, answer):
+    help_string = ""
 
-simulate_game()
+    letter_counts = {} # This accounts for the cases where we have multiple of the same letter in the string
+
+    for char in answer:
+        if(char not in letter_counts):
+            letter_counts[char] = answer.count(char)
+
+    for ans_char, guess_char in zip(answer, guess_string):
+        if(guess_char == ans_char):
+            help_string += "2"
+        elif(guess_char in letter_counts and letter_counts[guess_char] >= 1):
+            help_string += "1"
+            letter_counts[guess_char] -= 1
+        else:
+            help_string += "0"
+
+    return help_string
+
+
+# Non-interactive version used to test the script against given answers
+def test_algorithm():
+    answers = [] 
+    correct_answers = 0
+    round_sum = 0 # Used for finding the average round for correct answers
+
+    # First 200 answers to Wordle
+    # https://medium.com/@owenyin/here-lies-wordle-2021-2027-full-answer-list-52017ee99e86
+    with open("answers.txt") as file:
+        for line in file:
+            answers.append((line.split()[-1]).lower())
+
+    # From here we basically run the algorithm and see if it gets the correct answer at any point
+    for answer in answers:
+        scores = initialize_scores()
+        guess = ""
+        
+        final_round = 6
+
+        for round in range(6):
+            guess = max(scores, key = scores.get)
+            help_string = make_help_string(guess, answer)
+
+            update_scores(scores, guess, help_string)
+
+            if(help_string == "22222"):
+                final_round = round
+
+        if(answer == guess):
+            correct_answers += 1
+            round_sum += final_round
+
+    number_of_incorrect_answers = 200 - correct_answers
+
+    correct_percentage = correct_answers / 200
+    average_of_completed_rounds = round_sum / correct_answers
+
+    print("Percentage of correct answers: ", correct_percentage)
+    print("Number of incorrect answers: ", number_of_incorrect_answers)
+    print("Average of completed rounds: ", average_of_completed_rounds)
+
+
+test_algorithm()
