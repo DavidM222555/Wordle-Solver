@@ -36,7 +36,7 @@ def initialize_scores():
 
             letters_accessed.append(letter)
 
-        scores[word] = frequency_score + 5*unique_letters # This is the overall metric I use and that I find works quite well
+        scores[word] = frequency_score + 3*unique_letters # This is the overall metric I use and that I find works quite well
 
     # Sort the strings so we can easily access the highest valued string
     scores = dict(sorted(scores.items(), key = lambda item : item[1], reverse=True))
@@ -55,10 +55,6 @@ def update_scores(scores, prev_string, hint_string):
     keys_to_remove = []
 
     position_counter = 0
-
-    if(hint_string == "11111"):
-        print("You win!")
-        return
 
     for letter, hint in zip(prev_string, hint_string):
         if(hint == "0"): # Remove all words that contain letter in them
@@ -84,11 +80,30 @@ def update_scores(scores, prev_string, hint_string):
 def simulate_game_with_user_input():
     scores = initialize_scores()
 
-    for round in range(6):
-        guess = max(scores, key=scores.get) # Get the word with the highest score currently and show the user that string
-        print("Input: ", guess) 
+    print("Welcome to Wordle solver! The following program begins with three predetermined words and will ask you to enter the help string")
+    print("those words. The help string should be made by converting green to 2, yellow to 1, and blank to 0. For example,")
+    print("if Wordle outputs green green blank blank yellow for the word atone, you would type 22001")
+    print("\nAfter the first three rounds you will be given unique inputs based off the most likely choices from the previous three rounds\n")
 
-        hint_string = input("Hint string given for guess input: ") # Have the user enter the Wordle help string
+    # Round 1 is always the same, start with 'atone'
+    guess_1 = "atone"
+    help_string = input("Help string for atone: ")
+    update_scores(scores, guess_1, help_string)
+    
+    # Round 2 is always the same as well.
+    guess_2 = "whirs"
+    help_string = input("Help string for whirs: ")
+    update_scores(scores, guess_2, help_string)
+
+    # Round 3 is the last of the predetermined rounds
+    guess_3 = "clump"
+    help_string = input("Help string for clump: ")
+    update_scores(scores, guess_3, help_string)
+
+    for round in range(4):
+        guess = max(scores, key=scores.get) # Get the word with the highest score currently and show the user that string
+
+        hint_string = input(f"Help string for {guess}: ") # Have the user enter the Wordle help string
 
         update_scores(scores, guess, hint_string) # And now update the scores based off 
 
@@ -116,6 +131,8 @@ def make_help_string(guess_string, answer):
 
 # Non-interactive version used to test the script against given answers
 def test_algorithm():
+    results_file = open("log_file.txt", "w")
+
     answers = [] 
     correct_answers = 0
     round_sum = 0 # Used for finding the average round for correct answers
@@ -124,36 +141,44 @@ def test_algorithm():
     # https://medium.com/@owenyin/here-lies-wordle-2021-2027-full-answer-list-52017ee99e86
     with open("answers.txt") as file:
         for line in file:
-            answers.append((line.split()[-1]).lower())
+            answers.append(line.split()[0])
 
     # From here we basically run the algorithm and see if it gets the correct answer at any point
     for answer in answers:
         scores = initialize_scores()
-        guess = ""
-        
-        final_round = 6
 
-        for round in range(6):
+        # Round 1 is always the same, start with 'atone'
+        guess_1 = "atone"
+        help_string = make_help_string(guess_1, answer)
+        update_scores(scores, guess_1, help_string)
+        
+        # Round 2 is always the same as well.
+        guess_2 = "whirs"
+        help_string = make_help_string(guess_2, answer)
+        update_scores(scores, guess_2, help_string)
+
+        # Round 3 is the last of the predetermined rounds
+        guess_3 = "clump"
+        help_string = make_help_string(guess_3, answer)
+        update_scores(scores, guess_3, help_string)
+
+        for round in range(4):
             guess = max(scores, key = scores.get)
             help_string = make_help_string(guess, answer)
 
             update_scores(scores, guess, help_string)
 
-            if(help_string == "22222"):
-                final_round = round
-
         if(answer == guess):
             correct_answers += 1
-            round_sum += final_round
+        else:
+            error_result = "Incorrect result of: " + str(guess) + " for expected result of: " + str(answer) + "\n"
+            results_file.write(error_result)
 
-    number_of_incorrect_answers = 200 - correct_answers
+    number_of_incorrect_answers = len(answers) - correct_answers
+    correct_percentage = correct_answers / len(answers)
 
-    correct_percentage = correct_answers / 200
-    average_of_completed_rounds = round_sum / correct_answers
-
-    print("Percentage of correct answers: ", correct_percentage)
-    print("Number of incorrect answers: ", number_of_incorrect_answers)
-    print("Average of completed rounds: ", average_of_completed_rounds)
+    percentage_results = "Percentage of correct answers: " + str(correct_percentage) + "\n"
+    results_file.write(percentage_results)
 
 
-test_algorithm()
+simulate_game_with_user_input()
