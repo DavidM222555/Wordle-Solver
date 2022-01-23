@@ -80,8 +80,8 @@ def update_scores(scores, prev_string, hint_string):
 def simulate_game_with_user_input():
     scores = initialize_scores()
 
-    print("Welcome to Wordle solver! The following program begins with three predetermined words and will ask you to enter the help string")
-    print("those words. The help string should be made by converting green to 2, yellow to 1, and blank to 0. For example,")
+    print("Welcome to Wordle solver! The following program begins with three predetermined words and will ask you to enter the help string for")
+    print("that word. The help string should be made by converting green to 2, yellow to 1, and blank to 0. For example,")
     print("if Wordle outputs green green blank blank yellow for the word atone, you would type 22001")
     print("\nAfter the first three rounds you will be given unique inputs based off the most likely choices from the previous three rounds\n")
 
